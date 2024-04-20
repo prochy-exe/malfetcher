@@ -60,7 +60,7 @@ If you encounter any issues, feel free to open a new issue. If you have any new 
 
 ## Version History
 * [1.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.0.0)
-    * [Initial Release](https://github.com/prochy-exe/malfetcher/commit/38fbdd36e88890a8339f94d6e193deab5867220e)
+    * [Initial Release](https://github.com/prochy-exe/malfetcher/commit/2d356310fbe00143c50ffe14596532a7cd30e8db)
 
 ## Acknowledgments
 * [MyAnimeList](https://myanimelist.net)
