@@ -9,33 +9,33 @@ script_path = os.path.dirname(os.path.abspath(__file__))
 myanimelist_id_cache_path = os.path.join(script_path, 'cache', 'myanimelist_id_cache.json')
 myanimelist_search_cache_path = os.path.join(script_path, 'cache', 'myanimelist_search_cache.json')
 config_path = os.path.join(script_path, 'config', 'config.json')
-anime_request_url = 'https://api.myanimelist.net/v2/anime'
+anime_request_url = "https://api.myanimelist.net/v2/anime"
 
 al_to_mal_user_status = {
-    'CURRENT': 'watching',
-    'COMPLETED': 'completed',
-    'PAUSED': 'on_hold',
-    'DROPPED': 'dropped',
-    'PLANNING': 'plan_to_watch'
+    'CURRENT': "watching",
+    'COMPLETED': "completed",
+    'PAUSED': "on_hold",
+    'DROPPED': "dropped",
+    'PLANNING': "plan_to_watch"
 }
 
 mal_to_al_user_status = {v:k for k, v in al_to_mal_user_status.items()}
 
 al_to_mal_status = {
-    'FINISHED': 'finished_airing',
-    'RELEASING': 'currently_airing',
-    'NOT_YET_RELEASED': 'not_yet_aired'
+    'FINISHED': "finished_airing",
+    'RELEASING': "currently_airing",
+    'NOT_YET_RELEASED': "not_yet_aired"
 }
 
 mal_to_al_status = {v:k for k, v in al_to_mal_status.items()}
-skip_user_statuses = ['REPEATING']
+skip_user_statuses = ["REPEATING"]
 
 # Utils
 
 def clear_cache():
     config = utils_read_json(config_path)
     try:
-        del config['checked_date']
+        del config["checked_date"]
     except:
         pass
     os.remove(myanimelist_id_cache_path)
@@ -66,7 +66,7 @@ def check_status_in_cache():
             if not release_date:
                 continue
             status = cache[anime]['status']
-            if status == 'RELEASING':
+            if status == "RELEASING":
                     try:
                         next_ep_date = release_date + timedelta(cache[anime]['upcoming_ep'] * 7)
                         if end_date and current_date > end_date:
@@ -78,7 +78,7 @@ def check_status_in_cache():
                     except: #force update if we don't have the next episode
                         updated_info = get_anime_info(anime, True)
                         cache.update(updated_info)
-            elif status == 'NOT_YET_RELEASED':
+            elif status == "NOT_YET_RELEASED":
                 if release_date:
                     if current_date > release_date:
                         cache.update(get_anime_info(anime, True))
@@ -110,7 +110,7 @@ def make_graphql_request(myanimelist_api_url, params, myanimelist_token=None):
         myanimelist_token = load_config()
 
     # Constants for GraphQL endpoint and headers
-    HEADERS = {'Authorization': f'Bearer {myanimelist_token}'}
+    HEADERS = {'Authorization': f"Bearer {myanimelist_token}"}
 
     def make_request():
         response = requests.get(myanimelist_api_url, params=params, headers=HEADERS)
@@ -126,14 +126,14 @@ def make_graphql_request(myanimelist_api_url, params, myanimelist_token=None):
             return json_response
         elif response.status_code == 429:
             print(f"Rate limit exceeded. Waiting before retrying...")
-            print(params, HEADERS, sep='\n')
+            print(params, HEADERS, sep="\n")
             print(response.json())
             retry_after = int(response.headers.get('retry-after', 1))
             time.sleep(retry_after)
             retries += 1
         elif response.status_code == 500 or response.status_code == 400:
             print(f"Unknown error occured, retrying...")
-            print(params, HEADERS, sep='\n')
+            print(params, HEADERS, sep="\n")
             print(response.json())
             retries += 1
         elif response.status_code == 404:
@@ -150,37 +150,37 @@ def make_graphql_request(myanimelist_api_url, params, myanimelist_token=None):
                 
         print(f"Retrying... (Attempt {retries})")
 
-def get_latest_anime_entry_for_user(status = 'ALL', myanimelist_token=None,  username = None):
+def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  username = None):
     if not username:
         username = get_userdata(myanimelist_token)[0]
     status = status.upper()
-    status_options = ['CURRENT', 'PLANNING', 'COMPLETED', 'DROPPED', 'PAUSED', 'REPEATING']
+    status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
     params = {}
     params['sort'] = 'anime_start_date'
     params['fields'] = (
-        'id,'
-        'title,'
-        'alternative_titles,'
-        'start_date,'
-        'end_date,'
-        'nsfw,'
-        'media_type,'
-        'status,'
-        'genres,'
-        'my_list_status,'
-        'num_episodes,'
-        'related_anime'
+        "id,"
+        "title,"
+        "alternative_titles,"
+        "start_date,"
+        "end_date,"
+        "nsfw,"
+        "media_type,"
+        "status,"
+        "genres,"
+        "my_list_status,"
+        "num_episodes,"
+        "related_anime"
     )
     params['limit'] = 1
-    if status != 'ALL':
+    if status != "ALL":
         if not status in status_options:
-            print("Invalid status option. Allowed options are:", ', '.join(str(option) for option in status_options) )
+            print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options) )
             return
         if status in skip_user_statuses:
             return
         params['status'] = al_to_mal_user_status[status]
 
-    request_url = f'https://api.myanimelist.net/v2/users/{username}/animelist'
+    request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
     data = make_graphql_request(request_url, params, myanimelist_token)
 
     if not username in user_entries:
@@ -204,37 +204,35 @@ def get_latest_anime_entry_for_user(status = 'ALL', myanimelist_token=None,  use
     print(f"No entries found for {username}'s planned anime list.")
     return None
 
-def get_all_anime_for_user(status_list='ALL', myanimelist_token=None, username = None):
+def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username = None):
     if not username:
         username = get_userdata(myanimelist_token)[0]
     def main_function(status):
         status = status.upper()
-        status_options = ['CURRENT', 'PLANNING', 'COMPLETED', 'DROPPED', 'PAUSED', 'REPEATING']
+        status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
         params = {}
-        params['sort'] = 'anime_start_date'
+        params['sort'] = "anime_start_date"
         params['fields'] = (
-            'id,'
-            'title,'
-            'alternative_titles,'
-            'start_date,'
-            'end_date,'
-            'nsfw,'
-            'media_type,'
-            'status,'
-            'genres,'
-            'my_list_status,'
-            'num_episodes,'
-            'related_anime'
+            "id,"
+            "title,"
+            "alternative_titles,"
+            "start_date,"
+            "end_date,"
+            "nsfw,"
+            "media_type,"
+            "status,"
+            "genres,"
+            "my_list_status,"
+            "num_episodes,"
+            "related_anime"
         )
-        if status != 'ALL':
+        if status != "ALL":
             if not status in status_options:
-                print("Invalid status option. Allowed options are:", ', '.join(str(option) for option in status_options) )
-                return
-            if status in skip_user_statuses:
+                print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options) )
                 return
             params['status'] = al_to_mal_user_status[status]
 
-        request_url = f'https://api.myanimelist.net/v2/users/{username}/animelist'
+        request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
         data = make_graphql_request(request_url, params, myanimelist_token)
 
         if not username in user_entries:
@@ -274,9 +272,13 @@ def get_all_anime_for_user(status_list='ALL', myanimelist_token=None, username =
     elif len(status_list) == 1:
         status_list = status_list[0].upper()
         main_function(status_list)
+        if status in skip_user_statuses:
+            return
         return user_entries[username][status_list]
     elif isinstance(status_list, list):
         for status in status_list:
+            if status in skip_user_statuses:
+                continue
             status.upper()
             main_function(status)
             total_user[username].update(user_entries[username][status])
@@ -287,24 +289,24 @@ def get_anime_entry_for_user(myanimelist_id, myanimelist_token=None):
     username = get_userdata(myanimelist_token)[0]
     try:
         if myanimelist_id in user_entries[username]['ALL']:
-                    return {myanimelist_id: user_entries[username]['ALL'][myanimelist_id]}
+            return {myanimelist_id: user_entries[username]['ALL'][myanimelist_id]}
     except KeyError:
         params = {}
         params['fields'] = (
-        'id,'
-        'title,'
-        'alternative_titles,'
-        'start_date,'
-        'end_date,'
-        'nsfw,'
-        'media_type,'
-        'status,'
-        'genres,'
-        'my_list_status,'
-        'num_episodes,'
-        'related_anime'
+            "id,"
+            "title,"
+            "alternative_titles,"
+            "start_date,"
+            "end_date,"
+            "nsfw,"
+            "media_type,"
+            "status,"
+            "genres,"
+            "my_list_status,"
+            "num_episodes,"
+            "related_anime"
         )
-        request_url = f'{anime_request_url}/{myanimelist_id}'
+        request_url = f"{anime_request_url}/{myanimelist_id}"
         data = make_graphql_request(request_url, params, myanimelist_token)
         anime_data = {}
         if data:
@@ -347,18 +349,18 @@ def get_anime_info(anime_id, force_update = False, myanimelist_token=None):
 def myanimelist_fetch_anime_info(myanimelist_id, myanimelist_token=None):
     params = {
         'fields': (
-            'id,'
-            'title,'
-            'alternative_titles,'
-            'start_date,'
-            'end_date,'
-            'nsfw,'
-            'media_type,'
-            'status,'
-            'genres,'
-            'my_list_status,'
-            'num_episodes,'
-            'related_anime'
+            "id,"
+            "title,"
+            "alternative_titles,"
+            "start_date,"
+            "end_date,"
+            "nsfw,"
+            "media_type,"
+            "status,"
+            "genres,"
+            "my_list_status,"
+            "num_episodes,"
+            "related_anime"
         )
     }
     
@@ -375,9 +377,9 @@ def generate_anime_entry(anime_info, myanimelist_token):
     def getRelated():
         def get_additional_info(relation_id):
             params = {
-                'fields': 'status, related_anime'
+                'fields': "status, related_anime"
             }
-            data = make_graphql_request(anime_request_url + f'/{relation_id}', params, myanimelist_token)
+            data = make_graphql_request(anime_request_url + f"/{relation_id}", params, myanimelist_token)
             return data            
         
         relations = {}
@@ -387,7 +389,7 @@ def generate_anime_entry(anime_info, myanimelist_token):
             edges = get_additional_info(anime_info['id'])['related_anime']
         for edge in edges:
             relation_type = edge['relation_type'].upper()
-            if relation_type == 'PREQUEL' or relation_type == 'SEQUEL':
+            if relation_type == "PREQUEL" or relation_type == "SEQUEL":
                 relation_id = str(edge['node']['id'])
                 relations[relation_id] = {}
                 relations[relation_id]['main_title'] = edge['node']['title']
@@ -426,7 +428,7 @@ def generate_anime_entry(anime_info, myanimelist_token):
     anime_data['status'] = mal_to_al_status[anime_info['status']]
     anime_data['release_date'] = anime_info['start_date'] if 'start_date' in anime_info else None
     anime_data['end_date'] = anime_info['end_date'] if 'end_date' in anime_info else None
-    anime_data['upcoming_ep'] = generate_upcoming_ep(anime_data['release_date']) if anime_data['status'] == 'RELEASING' else None
+    anime_data['upcoming_ep'] = generate_upcoming_ep(anime_data['release_date']) if anime_data['status'] == "RELEASING" else None
     anime_data['format'] = anime_info['media_type'].upper()
     anime_data['related'] = getRelated()
     utils_save_json(myanimelist_id_cache_path, {anime_id: anime_data}, False)
@@ -442,7 +444,7 @@ def get_id(name, myanimelist_token=None):
         if anime_info:
             ani_dict = get_anime_info(anime_info, False, myanimelist_token)
             status = ani_dict[anime_info]['status']
-            if status == 'NOT_YET_RELEASED':
+            if status == "NOT_YET_RELEASED":
                 anime_info = None
             json_out = {name: anime_info}
             utils_save_json(myanimelist_search_cache_path, json_out, False)
@@ -472,7 +474,7 @@ def myanimelist_fetch_id(name, myanimelist_token=None):
 
 def get_userdata(myanimelist_token):
     params = {}
-    request_url = 'https://api.myanimelist.net/v2/users/@me'
+    request_url = "https://api.myanimelist.net/v2/users/@me"
     data = make_graphql_request(request_url, params, myanimelist_token)
 
     if data:
@@ -491,8 +493,8 @@ def mal_to_al_id(mal_id):
     }
     """
     # Constants for GraphQL endpoint and headers
-    ANILIST_API_URL = 'https://graphql.anilist.co'
-    HEADERS = {'Content-Type': 'application/json'}
+    ANILIST_API_URL = "https://graphql.anilist.co"
+    HEADERS = {'Content-Type': "application/json"}
     variables = {'malId': mal_id}
     response = requests.post(ANILIST_API_URL, json={'query': query, 'variables': variables}, headers=HEADERS).json()
 
