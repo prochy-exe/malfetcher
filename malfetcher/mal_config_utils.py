@@ -79,7 +79,8 @@ def setup_webserver():
                 'grant_type': "authorization_code",
                 'code': code,
                 'redirect_uri': f"http://localhost:8888/access_token",
-                'code_verifier': code_verifier
+                'code_verifier': code_verifier,
+                'state': "authrequest"
             }
             response = requests.post("https://myanimelist.net/v1/oauth2/token", data=json, headers=headers)
             return response.json()
@@ -137,6 +138,8 @@ def config_setup(print_only = False):
         global_tooltip += "&redirect_uri=http://localhost:8888/access_token"
         global_tooltip += f"&code_challenge={code_verifier}"
         global_tooltip += "&code_challenge_method=plain"
+        global_tooltip += "&state=authrequest"
+        
         setup_function()  # Start the server here
         user_token = access_token
         gevent.killall(
