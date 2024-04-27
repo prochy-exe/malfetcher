@@ -63,10 +63,10 @@ def check_status_in_cache():
                 end_date = datetime.strptime(cache[anime]['end_date'], '%Y-%m-%d').date()
             except:
                 end_date = None
-            if not release_date:
-                continue
             status = cache[anime]['status']
-            if status == "RELEASING":
+            if status == "NOT_YET_RELEASED":
+                cache.update(get_anime_info(anime, True)) #force update everytime
+            elif status == "RELEASING" and release_date:
                     try:
                         next_ep_date = release_date + timedelta(cache[anime]['upcoming_ep'] * 7)
                         if end_date and current_date > end_date:
@@ -78,10 +78,6 @@ def check_status_in_cache():
                     except: #force update if we don't have the next episode
                         updated_info = get_anime_info(anime, True)
                         cache.update(updated_info)
-            elif status == "NOT_YET_RELEASED":
-                if release_date:
-                    if current_date > release_date:
-                        cache.update(get_anime_info(anime, True))
         config_dict['checked_date'] = current_date.strftime('%Y-%m-%d')
         utils_save_json(config_path, config_dict)
         utils_save_json(myanimelist_id_cache_path, cache, True)
