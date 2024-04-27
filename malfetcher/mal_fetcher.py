@@ -1,7 +1,7 @@
 import requests, time, os, copy, math
 from datetime import datetime, timedelta
 from .utils import utils_save_json, utils_read_json
-from .mal_config_utils import config_setup
+from .mal_config_utils import config_setup, regenerate_token
 
 total_user = {}
 user_entries = {}
@@ -96,6 +96,7 @@ def load_config():
 # Functions
 
 def make_graphql_request(myanimelist_api_url, params, myanimelist_token=None):
+    local_token = False
     if myanimelist_token:
         pass
     elif 'myanimelist_key' in os.environ:
@@ -104,6 +105,7 @@ def make_graphql_request(myanimelist_api_url, params, myanimelist_token=None):
             os.makedirs(os.path.dirname(config_path))
     else:
         myanimelist_token = load_config()
+        local_token = True
 
     # Constants for GraphQL endpoint and headers
     HEADERS = {'Authorization': f"Bearer {myanimelist_token}"}
@@ -135,6 +137,10 @@ def make_graphql_request(myanimelist_api_url, params, myanimelist_token=None):
         elif response.status_code == 404:
             print(f"Anime not found")
             return None
+        elif response.status_code == 401 and local_token:
+            print(f"Access token expired, refreshing")
+            regenerate_token()
+            retries += 1
         else:
             print(f"Error {response.status_code}: {params}")
             return {}
