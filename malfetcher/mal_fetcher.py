@@ -414,6 +414,18 @@ def generate_anime_entry(anime_info, myanimelist_token):
             upcoming_ep = math.ceil(int((current_date - release_date).days)/7) + 1
             return upcoming_ep
 
+    def ensure_day_in_date(date_str):
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+            return date_str
+        except ValueError:
+            try:
+                year_month = datetime.strptime(date_str, '%Y-%m')
+                full_date = year_month.replace(day=1)
+                return full_date.strftime('%Y-%m-%d')
+            except ValueError:
+                return None
+
     anime_id = str(anime_info['id'])
     anime_data = {}
     anime_data['al_id'] = mal_to_al_id(anime_id)
@@ -426,8 +438,8 @@ def generate_anime_entry(anime_info, myanimelist_token):
     ] + anime_info['alternative_titles']['synonyms']
     anime_data['synonyms'] = [item for item in anime_data['synonyms'] if item is not None]    
     anime_data['status'] = mal_to_al_status[anime_info['status']]
-    anime_data['release_date'] = anime_info['start_date'] if 'start_date' in anime_info else None
-    anime_data['end_date'] = anime_info['end_date'] if 'end_date' in anime_info else None
+    anime_data['release_date'] = ensure_day_in_date(anime_info['start_date']) if 'start_date' in anime_info else None
+    anime_data['end_date'] = ensure_day_in_date(anime_info['end_date']) if 'end_date' in anime_info else None
     anime_data['upcoming_ep'] = generate_upcoming_ep(anime_data['release_date']) if anime_data['status'] == "RELEASING" else None
     anime_data['format'] = anime_info['media_type'].upper()
     anime_data['related'] = getRelated()
