@@ -51,13 +51,27 @@ def setup_webserver():
         response.headers['Access-Control-Allow-Methods'] = "GET, POST, OPTIONS"
         return response
 
+    def generate_user_agents(num_agents):
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0',
+        ]
+        return random.sample(user_agents, num_agents)
+
     @app.route('/access_token') #Listen for token webhook
     def receive_token():
         def make_request(code):
             global code_verifier
+            user_agents = generate_user_agents(5)
+            chosen_user_agent = random.choice(user_agents)
             headers = {
                 'Content-Type': "application/x-www-form-urlencoded",
                 'Accept': "application/json",
+                'Authorization': global_id,
+                'User-Agent': chosen_user_agent
             }
             json = {
                 'client_id': global_id,
