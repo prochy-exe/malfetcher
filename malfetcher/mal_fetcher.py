@@ -3,8 +3,6 @@ from datetime import datetime, timedelta
 from .utils import utils_save_json, utils_read_json
 from .mal_config_utils import config_setup, regenerate_token
 
-total_user = {}
-user_entries = {}
 script_path = os.path.dirname(os.path.abspath(__file__))
 myanimelist_id_cache_path = os.path.join(script_path, 'cache', 'myanimelist_id_cache.json')
 myanimelist_search_cache_path = os.path.join(script_path, 'cache', 'myanimelist_search_cache.json')
@@ -189,9 +187,6 @@ def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  use
     request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
     data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
 
-    if not username in user_entries:
-        user_entries[username] = {}
-        
     if data:
         anime = data[0]['node']
         anime_id = str(anime['id'])
@@ -204,7 +199,6 @@ def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  use
             user_entry[anime_id]['watching_status'] = mal_to_al_user_status[anime['my_list_status']['status']]
         except:
             pass
-        user_entries[username][anime_id] = user_entry
         return user_entry
 
     print(f"No entries found for {username}'s planned anime list.")
@@ -241,15 +235,6 @@ def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username =
         request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
         data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
 
-        if not username in user_entries:
-            user_entries[username] = {}
-
-        if not username in total_user:
-            total_user[username] = {}
-
-        if not status in user_entries[username]:
-            user_entries[username][status] = {}
-
         user_ids = {}
             
         if data:
@@ -266,67 +251,60 @@ def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username =
                     user_ids[anime_id]['watching_status'] = mal_to_al_user_status[anime_entry_data['my_list_status']['status']]
                 except:
                     pass
-            user_entries[username][status].update(user_ids)
-            return
+            return user_ids
         print(f"No entries found for {username}'s planned anime list.")
         return None    
 
     if isinstance(status_list, str):
         status_list = status_list.upper()
         main_function(status_list)
-        return user_entries[username][status_list]
+        return main_function(status_list)
     elif len(status_list) == 1:
-        status_list = status_list[0].upper()
-        main_function(status_list)
+        status = status_list[0].upper()
         if status in skip_user_statuses:
             return
-        return user_entries[username][status_list]
+        main_function(status)
+        return main_function(status_list)
     elif isinstance(status_list, list):
+        ani_list = {}
         for status in status_list:
             if status in skip_user_statuses:
                 continue
             status.upper()
-            main_function(status)
-            total_user[username].update(user_entries[username][status])
-        return total_user[username]
+            ani_list.update(main_function(status))
+        return ani_list
 
 def get_anime_entry_for_user(myanimelist_id, myanimelist_token=None):
     myanimelist_id = str(myanimelist_id)
     username = get_userdata(myanimelist_token)[0]
-    try:
-        if myanimelist_id in user_entries[username]['ALL']:
-            return {myanimelist_id: user_entries[username]['ALL'][myanimelist_id]}
-    except KeyError:
-        params = {}
-        params['fields'] = (
-            "id,"
-            "title,"
-            "alternative_titles,"
-            "start_date,"
-            "end_date,"
-            "nsfw,"
-            "media_type,"
-            "status,"
-            "genres,"
-            "my_list_status,"
-            "num_episodes,"
-            "related_anime"
-        )
-        request_url = f"{anime_request_url}/{myanimelist_id}"
-        data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
-        anime_data = {}
-        if data:
-            anime_id = str(data['id'])
-            anime_data[anime_id] = {}
-            anime_data[anime_id].update(generate_anime_entry(data, myanimelist_token))
-            anime_data[anime_id]['watched_ep'] = data['my_list_status']['num_episodes_watched']
-            anime_data[anime_id]['watching_status'] = mal_to_al_user_status[data['my_list_status']['status']]
-            return anime_data
-    return None
 
-def reset_user_cache(username):
-    user_entries[username] = {}
-    total_user[username] = {}
+    params = {}
+    params['fields'] = (
+        "id,"
+        "title,"
+        "alternative_titles,"
+        "start_date,"
+        "end_date,"
+        "nsfw,"
+        "media_type,"
+        "status,"
+        "genres,"
+        "my_list_status,"
+        "num_episodes,"
+        "related_anime"
+    )
+    request_url = f"{anime_request_url}/{myanimelist_id}"
+    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
+    anime_data = {}
+    if data:
+        anime_id = str(data['id'])
+        if 'my_list_status' not in data:
+            return None
+        anime_data[anime_id] = generate_anime_entry(data, myanimelist_token)
+        anime_data[anime_id]['watched_ep'] = data['my_list_status']['num_episodes_watched']
+        anime_data[anime_id]['watching_status'] = mal_to_al_user_status[data['my_list_status']['status']]
+        return anime_data
+    return None
 
 def get_anime_info(anime_id, force_update = False, myanimelist_token=None):
     if force_update:
