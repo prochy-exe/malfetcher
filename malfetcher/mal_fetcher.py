@@ -201,7 +201,7 @@ def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  use
             pass
         return user_entry
 
-    print(f"No entries found for {username}'s planned anime list.")
+    print(f"No entries found for {username}'s {status.lower()} anime list.")
     return None
 
 def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username = None):
@@ -252,7 +252,7 @@ def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username =
                 except:
                     pass
             return user_ids
-        print(f"No entries found for {username}'s planned anime list.")
+        print(f"No entries found for {username}'s {status.lower()} anime list.")
         return None    
 
     if isinstance(status_list, str):
