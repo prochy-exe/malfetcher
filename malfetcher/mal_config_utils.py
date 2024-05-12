@@ -1,3 +1,4 @@
+import socket
 import os, webbrowser, platform, requests, gevent, gc, string, random
 from flask import Flask, request, redirect
 from gevent.pywsgi import WSGIServer
@@ -16,6 +17,19 @@ def generate_mal_verifier():
     return code_verifier
 
 code_verifier = generate_mal_verifier()
+
+def get_ip_address():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip_address = s.getsockname()[0]
+        s.close()
+        return ip_address
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+host_ip = get_ip_address()
 
 # Paths
 script_path = os.path.dirname(os.path.abspath(__file__))
@@ -108,7 +122,7 @@ def setup_webserver():
                 'client_secret': global_secret,
                 'grant_type': "authorization_code",
                 'code': code,
-                'redirect_uri': f"http://localhost:8888/access_token",
+                'redirect_uri': f"http://{host_ip}:8888/access_token",
                 'code_verifier': code_verifier,
                 'state': "authrequest"
             }
@@ -143,7 +157,7 @@ def setup_webserver():
             webbrowser.open(global_tooltip, 0)
         http_server.serve_forever()
 
-    http_server = WSGIServer(("127.0.0.1", 8888), app, log=None)
+    http_server = WSGIServer((host_ip, 8888), app, log=None)
 
     return start_webserver, http_server 
         
@@ -172,7 +186,7 @@ def config_setup(print_only = False):
         global_tooltip = "https://myanimelist.net/v1/oauth2/authorize?"
         global_tooltip += "response_type=code"
         global_tooltip += f"&client_id={global_id}"
-        global_tooltip += "&redirect_uri=http://localhost:8888/access_token"
+        global_tooltip += f"&redirect_uri=http://{host_ip}:8888/access_token"
         global_tooltip += f"&code_challenge={code_verifier}"
         global_tooltip += "&code_challenge_method=plain"
         global_tooltip += "&state=authrequest"
