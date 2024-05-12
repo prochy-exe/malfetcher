@@ -28,6 +28,15 @@ al_to_mal_status = {
 mal_to_al_status = {v:k for k, v in al_to_mal_status.items()}
 skip_user_statuses = ["REPEATING"]
 
+# Minimal user setup to interact with MyAnimeList API
+config = utils_read_json(config_path)
+if not config or 'myanimelist_client_id' not in config:
+    client_id = input("Please input your MyAnimeList API Client ID.\nhttps://myanimelist.net/apiconfig\n")
+    config['myanimelist_client_id'] = client_id
+    utils_save_json(config_path, config)
+else:
+    client_id = config['myanimelist_client_id']
+
 # Utils
 
 def clear_cache():
@@ -93,20 +102,21 @@ def load_config():
 
 # Functions
 
-def make_graphql_request(myanimelist_api_url, params, method='get', myanimelist_token=None):
+def make_graphql_request(myanimelist_api_url, params, method='get', myanimelist_token=None, user_request = False):
     local_token = False
-    if myanimelist_token:
-        pass
-    elif 'myanimelist_key' in os.environ:
-        myanimelist_token = os.getenv('myanimelist_key')
-        if not os.path.exists(config_path):
-            os.makedirs(os.path.dirname(config_path))
+    if user_request:
+        if myanimelist_token:
+            pass
+        elif 'myanimelist_key' in os.environ:
+            myanimelist_token = os.getenv('myanimelist_key')
+            if not os.path.exists(config_path):
+                os.makedirs(os.path.dirname(config_path))
+        else:
+            myanimelist_token = load_config()
+            local_token = True
+        HEADERS = {'Authorization': f"Bearer {myanimelist_token}"}
     else:
-        myanimelist_token = load_config()
-        local_token = True
-
-    # Constants for GraphQL endpoint and headers
-    HEADERS = {'Authorization': f"Bearer {myanimelist_token}"}
+        HEADERS = {'X-MAL-CLIENT-ID': f"{client_id}"}
 
     def make_request():
         request_func = getattr(requests, method.lower(), None)
@@ -157,6 +167,10 @@ def make_graphql_request(myanimelist_api_url, params, method='get', myanimelist_
 def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  username = None):
     if not username:
         username = get_userdata(myanimelist_token)[0]
+        user_request = True
+    else:
+        user_request = False
+
     status = status.upper()
     status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
     params = {}
@@ -185,7 +199,7 @@ def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  use
         params['status'] = al_to_mal_user_status[status]
 
     request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
-    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
+    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token, user_request = user_request)
 
     if data:
         anime = data[0]['node']
@@ -207,6 +221,10 @@ def get_latest_anime_entry_for_user(status = "ALL", myanimelist_token=None,  use
 def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username = None):
     if not username:
         username = get_userdata(myanimelist_token)[0]
+        user_request = True
+    else:
+        user_request = False
+        
     def main_function(status):
         status = status.upper()
         status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
@@ -233,7 +251,7 @@ def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username =
             params['status'] = al_to_mal_user_status[status]
 
         request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
-        data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
+        data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token, user_request = user_request)
 
         user_ids = {}
             
@@ -276,7 +294,6 @@ def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username =
 
 def get_anime_entry_for_user(myanimelist_id, myanimelist_token=None):
     myanimelist_id = str(myanimelist_id)
-    username = get_userdata(myanimelist_token)[0]
 
     params = {}
     params['fields'] = (
@@ -294,7 +311,7 @@ def get_anime_entry_for_user(myanimelist_id, myanimelist_token=None):
         "related_anime"
     )
     request_url = f"{anime_request_url}/{myanimelist_id}"
-    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
+    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token, user_request=True)
     anime_data = {}
     if data:
         anime_id = str(data['id'])
@@ -471,7 +488,7 @@ def myanimelist_fetch_id(name, myanimelist_token=None):
 def get_userdata(myanimelist_token):
     params = {}
     request_url = "https://api.myanimelist.net/v2/users/@me"
-    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token)
+    data = make_graphql_request(request_url, params, myanimelist_token = myanimelist_token, user_request = True)
 
     if data:
         # Extract the username from the response data
@@ -511,5 +528,5 @@ def update_entry(anime_id, progress, myanimelist_token=None):
     else:
         params['status'] = 'CURRENT'
     request_url = f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status"
-    make_graphql_request(request_url, params, 'put', myanimelist_token)
+    make_graphql_request(request_url, params, 'put', myanimelist_token, True)
     print('Updating progress successful')
