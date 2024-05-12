@@ -142,7 +142,7 @@ def make_graphql_request(myanimelist_api_url, params, method='get', myanimelist_
             time.sleep(retry_after)
             retries += 1
         elif response.status_code == 500 or response.status_code == 400:
-            print(f"Unknown error occured, retrying...")
+            print(f"Unknown error occurred, retrying...")
             print(params, HEADERS, sep="\n")
             print(response.json())
             retries += 1
