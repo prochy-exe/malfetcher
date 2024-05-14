@@ -3,6 +3,7 @@
 A simple library to help you fetch data from MyAnimeList
 
 ## Description
+
 This library is aimed at people who might be interested in automatizing their anime library.
 
 ## Getting Started
@@ -38,7 +39,7 @@ pip install -e .
 
 * To import the library into your code use:
 ```
-import malhelper
+import malfetcher
 ```
 * When importing this library for the first time, you will be taken through the setup process
 
@@ -51,7 +52,7 @@ import malhelper
 * Choose whatever name you fancy, and for the redirect URL use http://localhost:8888/auth
 * After you save the client, copy the ID and paste it into the terminal
 * After entering the ID you will be taken to an auth page, where you need to allow the app to access your account.
-* Afterwards you will be taken to a redirect page that is momentarily hosted using gevent. (If you have any worries, please see the token_getter.html source code.)
+* Afterwards you will be taken to a redirect page that will automatically send the token to the library.
 * After that the library is successfully set-up and ready for use.
 
 ## Help
