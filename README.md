@@ -59,7 +59,7 @@ import malhelper
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
-* [1.1](https://github.com/prochy-exe/malfetcher/releases/tag/v1.1.0)
+* [1.1.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.1.0)
     * [fix typo](https://github.com/prochy-exe/malfetcher/commit/ec8fa79befc1a4190667639920f3b6bd736340f1)
     * [allow some functions to not require user token](https://github.com/prochy-exe/malfetcher/commit/2a3b8c4229984caf7e383072eb5e06af0208c3e3)
     * [use local ip address instead of localhost](https://github.com/prochy-exe/malfetcher/commit/ccb7bfff7d136e9be0204509f18f1646185b5e2c)
@@ -73,7 +73,7 @@ If you encounter any issues, feel free to open a new issue. If you have any new 
     * [fetch unreleased info all the time](https://github.com/prochy-exe/malfetcher/commit/15d8723dab29a67f0b55f903f8195a47bced6253)
     * [make sure we have a day in the dates](https://github.com/prochy-exe/malfetcher/commit/6ceea01d96ec190b85e0d3950f84a861aa464a73)
     * [Formatting changes](https://github.com/prochy-exe/malfetcher/commit/d06303c44837bc75f788fb29e510dad645c9e801)
-* [1.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.0.0)
+* [1.0.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.0.0)
     * [Initial Release](https://github.com/prochy-exe/malfetcher/commit/2d356310fbe00143c50ffe14596532a7cd30e8db)
 
 ## Acknowledgments
