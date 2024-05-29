@@ -32,6 +32,8 @@ skip_user_statuses = ["REPEATING"]
 config = utils_read_json(config_path)
 if not config or 'myanimelist_client_id' not in config:
     client_id = input("Please input your MyAnimeList API Client ID.\nhttps://myanimelist.net/apiconfig\n")
+    if not config:
+        config = {}
     config['myanimelist_client_id'] = client_id
     utils_save_json(config_path, config)
 else:
