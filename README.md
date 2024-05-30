@@ -60,6 +60,8 @@ import malfetcher
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
+* [1.2.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.2.0)
+    * [fix light init](https://github.com/prochy-exe/malfetcher/commit/8f30536fe4f9817eea870cb4d4ea7a248badb0b5)
 * [1.1.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.1.0)
     * [fix typo](https://github.com/prochy-exe/malfetcher/commit/ec8fa79befc1a4190667639920f3b6bd736340f1)
     * [allow some functions to not require user token](https://github.com/prochy-exe/malfetcher/commit/2a3b8c4229984caf7e383072eb5e06af0208c3e3)
