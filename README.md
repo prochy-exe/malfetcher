@@ -60,6 +60,8 @@ import malfetcher
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
+* [1.3.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.3.0)
+    * [don't cache empty searches](https://github.com/prochy-exe/malfetcher/commit/40104e68c2d093aa9a43ef61a5d506b86d7d7df8)
 * [1.2.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.2.0)
     * [fix light init](https://github.com/prochy-exe/malfetcher/commit/8f30536fe4f9817eea870cb4d4ea7a248badb0b5)
 * [1.1.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.1.0)
