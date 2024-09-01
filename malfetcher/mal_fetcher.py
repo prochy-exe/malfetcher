@@ -1,6 +1,6 @@
 import requests, time, os, copy, math
 from datetime import datetime, timedelta
-from .utils import utils_save_json, utils_read_json
+from .utils import utils_save_json, utils_read_json, print_deb
 from .mal_config_utils import config_setup, regenerate_token
 
 script_path = os.path.dirname(os.path.abspath(__file__))
@@ -137,31 +137,31 @@ def make_graphql_request(myanimelist_api_url, params, method='get', myanimelist_
                 return json_response['data']
             return json_response
         elif response.status_code == 429:
-            print(f"Rate limit exceeded. Waiting before retrying...")
-            print(params, HEADERS, sep="\n")
-            print(response.json())
+            print_deb(f"Rate limit exceeded. Waiting before retrying...")
+            print_deb(params, HEADERS, sep="\n")
+            print_deb(response.json())
             retry_after = int(response.headers.get('retry-after', 1))
             time.sleep(retry_after)
             retries += 1
         elif response.status_code == 500 or response.status_code == 400:
-            print(f"Unknown error occurred, retrying...")
-            print(params, HEADERS, sep="\n")
-            print(response.json())
+            print_deb(f"Unknown error occurred, retrying...")
+            print_deb(params, HEADERS, sep="\n")
+            print_deb(response.json())
             retries += 1
         elif response.status_code == 404:
             print(f"Anime not found")
             return None
         elif response.status_code == 401 and local_token:
-            print(f"Access token expired, refreshing")
+            print_deb(f"Access token expired, refreshing")
             regenerate_token()
             retries += 1
         else:
-            print(f"Error {response.status_code}: {params}")
+            print_deb(f"Error {response.status_code}: {params}")
             return {}
 
         # Exponential backoff with a maximum of 5 retries
         if retries >= 5:
-            print("Maximum retries reached. Exiting.")
+            print_deb("Maximum retries reached. Exiting.")
             return {}
                 
         print(f"Retrying... (Attempt {retries})")
@@ -248,7 +248,7 @@ def get_all_anime_for_user(status_list="ALL", myanimelist_token=None, username =
         )
         if status != "ALL":
             if not status in status_options:
-                print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options) )
+                print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options))
                 return
             params['status'] = al_to_mal_user_status[status]
 
@@ -342,7 +342,7 @@ def get_anime_info(anime_id, force_update = False, myanimelist_token=None):
     # Check if anime_id exists in cache
     try:
         if anime_id in anime_cache and not force_update:
-                print("Returning cached result for anime_id:", anime_id)
+                print_deb("Returning cached result for anime_id:", anime_id)
                 return {anime_id: anime_cache[anime_id]}
         else:
             return fetch_from_myanimelist()
@@ -469,7 +469,7 @@ def get_id(name, myanimelist_token=None):
     # Check if anime_id exists in cache
     try:
         if search_cache and name in search_cache:
-                print("Returning cached result for search query:", name)
+                print_deb("Returning cached result for search query:", name)
                 return str(search_cache[name])
         else:
                 return fetch_from_myanimelist()
@@ -532,4 +532,4 @@ def update_entry(anime_id, progress, myanimelist_token=None):
         params['status'] = 'CURRENT'
     request_url = f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status"
     make_graphql_request(request_url, params, 'put', myanimelist_token, True)
-    print('Updating progress successful')
+    print_deb('Updating progress successful')
