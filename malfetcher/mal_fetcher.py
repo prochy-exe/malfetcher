@@ -519,6 +519,7 @@ def mal_to_al_id(mal_id):
     return None
 
 def update_entry(anime_id, progress, mal_token=None):
+    anime_id = str(anime_id)
     progress = int(progress)
     total_eps = get_anime_info(anime_id, mal_token=mal_token)[anime_id]['total_eps']
     params = {}
