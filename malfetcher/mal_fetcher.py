@@ -522,6 +522,15 @@ def update_entry(anime_id, progress, mal_token=None):
     anime_id = str(anime_id)
     progress = int(progress)
     total_eps = get_anime_info(anime_id, mal_token=mal_token)[anime_id]['total_eps']
+    try:
+        user_eps = get_anime_entry_for_user(anime_id, mal_token=mal_token)[anime_id]['watched_ep']
+    except:
+        user_eps = 0
+
+    if progress <= user_eps:
+        print_deb('Not updating, progress is lower or equal than user progress')
+        return
+
     params = {}
     params['num_watched_episodes'] = progress
     if progress == total_eps:
