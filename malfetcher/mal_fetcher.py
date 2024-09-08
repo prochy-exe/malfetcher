@@ -525,7 +525,7 @@ def update_entry(anime_id, progress, mal_token=None):
     try:
         user_eps = get_anime_entry_for_user(anime_id, mal_token=mal_token)[anime_id]['watched_ep']
     except:
-        user_eps = 0
+        user_eps = -1 #allow for 0 as a value
 
     if progress <= user_eps:
         print_deb('Not updating, progress is lower or equal than user progress')
@@ -534,12 +534,12 @@ def update_entry(anime_id, progress, mal_token=None):
     params = {}
     params['num_watched_episodes'] = progress
     if progress == total_eps:
-        params['status'] = 'COMPLETED'
+        params['status'] = 'completed'
     elif progress == 0:
-        params['status'] = 'PLANNING'
+        params['status'] = 'plan_to_watch'
         del params['num_watched_episodes']
     else:
-        params['status'] = 'CURRENT'
+        params['status'] = 'watching'
     request_url = f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status"
     make_graphql_request(request_url, params, 'put', mal_token, True)
     print_deb('Updating progress successful')
