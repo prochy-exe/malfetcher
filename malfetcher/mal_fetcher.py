@@ -6,6 +6,7 @@ from .mal_config_utils import config_setup, regenerate_token
 script_path = os.path.dirname(os.path.abspath(__file__))
 mal_id_cache_path = os.path.join(script_path, 'cache', 'myanimelist_id_cache.json')
 mal_search_cache_path = os.path.join(script_path, 'cache', 'myanimelist_search_cache.json')
+mal_to_al_cache_path = os.path.join(script_path, 'cache', 'mal_to_al_cache.json')
 config_path = os.path.join(script_path, 'config', 'config.json')
 anime_request_url = "https://api.myanimelist.net/v2/anime"
 
@@ -508,14 +509,23 @@ def mal_to_al_id(mal_id):
         }
     }
     """
+    cached_al_ids = utils_read_json(mal_to_al_cache_path)
+    if cached_al_ids and mal_id in cached_al_ids:
+        return int(cached_al_ids[mal_id])
     # Constants for GraphQL endpoint and headers
     ANILIST_API_URL = "https://graphql.anilist.co"
     HEADERS = {'Content-Type': "application/json"}
     variables = {'malId': mal_id}
-    response = requests.post(ANILIST_API_URL, json={'query': query, 'variables': variables}, headers=HEADERS).json()
+    response = requests.post(ANILIST_API_URL, json={'query': query, 'variables': variables}, headers=HEADERS)
+    while response.status_code == 429: # retry if we hit rate limit
+        time.sleep(int(response.headers['Retry-After']))
+        response = requests.post(ANILIST_API_URL, json={'query': query, 'variables': variables}, headers=HEADERS)
+    response_dict = response.json()
 
-    if response:
-        return int(response['data']['Media']['id'])
+    if response_dict:
+        if response.status_code == 200:
+            utils_save_json(mal_to_al_cache_path, {mal_id: response_dict['data']['Media']['id']}, False)
+            return int(response_dict['data']['Media']['id'])
     return None
 
 def update_entry(anime_id, progress, mal_token=None):
