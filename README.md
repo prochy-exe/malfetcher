@@ -60,6 +60,8 @@ import malfetcher
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
+* [1.7.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.7.0)
+    * [implement caching and 429 error handling](https://github.com/prochy-exe/malfetcher/commit/774edf2c3f2176218830718c3bfe004971a0048f)
 * [1.6.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.6.0)
     * [fix up updating entries](https://github.com/prochy-exe/malfetcher/commit/10d97fb6f79c91aa3a3bca4e35b92dfbed8c4ae1)
 * [1.5.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.5.0)
