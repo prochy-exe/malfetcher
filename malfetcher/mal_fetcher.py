@@ -181,12 +181,12 @@ def get_latest_anime_entry_for_user(status = "ALL", mal_token=None,  username = 
         "media_type,"
         "status,"
         "genres,"
-        "my_list_status,"
+        "my_list_status{status,num_times_rewatched,is_rewatching,num_episodes_watched},"
         "num_episodes,"
         "related_anime"
     )
     params['limit'] = 1
-    if status != "ALL":
+    if status != "ALL" and status != "REPEATING":
         if not status in status_options:
             print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options) )
             return
@@ -198,7 +198,15 @@ def get_latest_anime_entry_for_user(status = "ALL", mal_token=None,  username = 
     data = make_graphql_request(request_url, params, mal_token = mal_token, user_request = user_request)
 
     if data:
-        anime = data[0]['node']
+        if status == "REPEATING":
+            for anime_entry in data:
+                if anime_entry['node']['my_list_status']['is_rewatching']:
+                    anime = anime_entry['node']
+                    break
+            print(f"No entries found for {username}'s {status.lower()} anime list.")
+            return None
+        else:
+            anime = data[0]['node']
         anime_id = str(anime['id'])
         anime_info = generate_anime_entry(anime, mal_token)
         user_entry = {}    # Initialize as a dictionary if not already initialized
@@ -206,7 +214,8 @@ def get_latest_anime_entry_for_user(status = "ALL", mal_token=None,  username = 
         user_entry[anime_id].update(anime_info)
         try:
             user_entry[anime_id]['watched_ep'] = anime['my_list_status']['num_episodes_watched']
-            user_entry[anime_id]['watching_status'] = mal_to_al_user_status[anime['my_list_status']['status']]
+            user_entry[anime_id]['watching_status'] = 'REPEATING' if anime['my_list_status']['is_rewatching'] else mal_to_al_user_status[anime['my_list_status']['status']]
+            user_entry[anime_id]['rewatch_count'] = anime['my_list_status']['num_times_rewatched']
         except:
             pass
         return user_entry
@@ -236,11 +245,11 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
             "media_type,"
             "status,"
             "genres,"
-            "my_list_status,"
+            "my_list_status{status,num_times_rewatched,is_rewatching,num_episodes_watched},"
             "num_episodes,"
             "related_anime"
         )
-        if status != "ALL":
+        if status != "ALL" and status != "REPEATING":
             if not status in status_options:
                 print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options))
                 return
@@ -254,6 +263,8 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
         if data:
             for anime_entry in data:
                 anime_entry_data = anime_entry['node']
+                if status == "REPEATING" and not anime_entry_data['my_list_status']['is_rewatching']:
+                    continue
                 anime_id = anime_entry_data['id']
                 anime_id = str(anime_id)
                 anime_info = generate_anime_entry(anime_entry_data, mal_token)
@@ -262,7 +273,8 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
                 user_ids[anime_id].update(anime_info)
                 try:
                     user_ids[anime_id]['watched_ep'] = anime_entry_data['my_list_status']['num_episodes_watched']
-                    user_ids[anime_id]['watching_status'] = mal_to_al_user_status[anime_entry_data['my_list_status']['status']]
+                    user_ids[anime_id]['watching_status'] = 'REPEATING' if anime_entry_data['my_list_status']['is_rewatching'] else mal_to_al_user_status[anime_entry_data['my_list_status']['status']]
+                    user_ids[anime_id]['rewatch_count'] = anime_entry_data['my_list_status']['num_times_rewatched'] if 'num_times_rewatched' in anime_entry_data['my_list_status'] else 0
                 except:
                     pass
             return user_ids
@@ -302,7 +314,7 @@ def get_anime_entry_for_user(mal_id, mal_token=None):
         "media_type,"
         "status,"
         "genres,"
-        "my_list_status,"
+        "my_list_status{status,num_times_rewatched,is_rewatching,num_episodes_watched},"
         "num_episodes,"
         "related_anime"
     )
@@ -316,6 +328,8 @@ def get_anime_entry_for_user(mal_id, mal_token=None):
         anime_data[anime_id] = generate_anime_entry(data, mal_token)
         anime_data[anime_id]['watched_ep'] = data['my_list_status']['num_episodes_watched']
         anime_data[anime_id]['watching_status'] = mal_to_al_user_status[data['my_list_status']['status']]
+        anime_data[anime_id]['watching_status'] = 'REPEATING' if data['my_list_status']['is_rewatching'] else mal_to_al_user_status[data['my_list_status']['status']]
+        anime_data[anime_id]['rewatch_count'] = data['my_list_status']['num_times_rewatched'] if 'num_times_rewatched' in data['my_list_status'] else 0
         return anime_data
     return None
 
@@ -530,19 +544,28 @@ def update_entry(anime_id, progress, mal_token=None):
     except:
         user_eps = -1 #allow for 0 as a value
 
-    if progress <= user_eps:
+    if progress <= user_eps and user_eps != total_eps:
         print_deb('Not updating, progress is lower or equal than user progress')
         return
 
     params = {}
     params['num_watched_episodes'] = progress
-    if progress == total_eps:
+    if progress == total_eps and current_status != 'REPEATING':
         params['status'] = 'completed'
     elif progress == 0:
         params['status'] = 'plan_to_watch'
         del params['num_watched_episodes']
     else:
-        params['status'] = 'watching'
+        if current_status == 'COMPLETED':
+            params['is_rewatching'] = 'true'
+        elif current_status == 'REPEATING':
+            if progress == total_eps:
+                params['num_times_rewatched'] = anime_info['rewatch_count'] + 1
+                params['is_rewatching'] = 'false'
+                params['status'] = 'completed'
+        else:
+            if current_status != 'CURRENT':
+                params['status'] = 'watching'
     request_url = f"https://api.myanimelist.net/v2/anime/{anime_id}/my_list_status"
     make_graphql_request(request_url, params, 'put', mal_token, True)
     print_deb('Updating progress successful')
