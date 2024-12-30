@@ -170,7 +170,8 @@ def get_latest_anime_entry_for_user(status = "ALL", mal_token=None,  username = 
     status = status.upper()
     status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
     params = {}
-    params['sort'] = 'anime_start_date'
+    params['sort'] = 'list_updated_at'
+    params['limit'] = 1000
     params['fields'] = (
         "id,"
         "title,"
@@ -234,7 +235,8 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
         status = status.upper()
         status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
         params = {}
-        params['sort'] = "anime_start_date"
+        params['sort'] = "list_updated_at"
+        params['limit'] = 1000
         params['fields'] = (
             "id,"
             "title,"
