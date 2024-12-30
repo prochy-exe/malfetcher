@@ -640,7 +640,6 @@ def update_entry(anime_id, progress, mal_token=None):
         params['status'] = 'completed'
     elif progress == 0:
         params['status'] = 'plan_to_watch'
-        del params['num_watched_episodes']
     else:
         if current_status == 'COMPLETED':
             params['is_rewatching'] = 'true'
