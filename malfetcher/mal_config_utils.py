@@ -29,8 +29,6 @@ def get_ip_address():
         print("Error:", e)
         return None
 
-host_ip = get_ip_address()
-
 # Paths
 script_path = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_path, 'config', 'config.json')
@@ -42,6 +40,11 @@ headless_config = False
 if is_linux:
     if is_ssh or is_displayless:
         headless_config = True
+
+if headless_config:
+    host_ip = get_ip_address()
+else:
+    host_ip = 'localhost'
 
 def generate_mal_verifier():
     def generate_random_string(length):
@@ -189,7 +192,6 @@ def config_setup(print_only = False):
         global_tooltip += f"&redirect_uri=http://{host_ip}:8888/access_token"
         global_tooltip += f"&code_challenge={code_verifier}"
         global_tooltip += "&code_challenge_method=plain"
-        global_tooltip += "&state=authrequest"
         
         setup_function()  # Start the server here
         user_token = access_token
@@ -201,6 +203,7 @@ def config_setup(print_only = False):
     
     config_dict = {}
     print("Please create a new API client")
+    print(f"Put this as the redirect URI: http://{host_ip}:8888/access_token")
     if headless_config:
         if is_displayless:
             print("The setup process cannot be continued on this machine")
