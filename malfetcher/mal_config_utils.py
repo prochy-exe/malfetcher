@@ -4,6 +4,7 @@ from flask import Flask, request, redirect
 from gevent.pywsgi import WSGIServer
 from urllib.parse import parse_qs
 from .utils import utils_save_json, utils_read_json
+from time import sleep
 
 def generate_mal_verifier():
     def generate_random_string(length):
@@ -32,6 +33,7 @@ def get_ip_address():
 # Paths
 script_path = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(script_path, 'config', 'config.json')
+config = utils_read_json(config_path)
 
 is_ssh = 'SSH_CONNECTION' in os.environ
 is_displayless = 'DISPLAY' not in os.environ
@@ -46,16 +48,35 @@ if headless_config:
 else:
     host_ip = 'localhost'
 
-def generate_mal_verifier():
-    def generate_random_string(length):
-        characters = string.ascii_letters + string.digits
-        random_string = "".join(random.choice(characters) for _ in range(length))
-        return random_string
+    def gen_please(name, help):
+        return f"Please input your {name} here ({help}):\n"
     
-    # Generate a random code verifier between 43 and 128 characters
-    code_verifier_length = random.randint(43, 128)
-    code_verifier = generate_random_string(code_verifier_length)
-    return code_verifier
+    def get_input(prompt, data_type = str):
+        while True:
+            user_input = input(prompt)
+            try:
+                converted_input = data_type(user_input)
+                return converted_input
+            except ValueError:
+                print("Invalid input. Please enter a valid", data_type.__name__)   
+
+def minimal_setup():
+    global config
+    if not config or 'myanimelist_client_id' not in config:
+        print("Please create a new API client")
+        print(f"Put this as the redirect URI: http://{host_ip}:8888/access_token")
+        if headless_config:
+            client_id = get_input(gen_please("MyAnimeList API Client ID","https://myanimelist.net/apiconfig"))
+        else:
+            webbrowser.open("https://myanimelist.net/apiconfig", 0)
+            client_id = get_input(gen_please("MyAnimeList API Client ID","Paste the Client ID"))
+        if not config:
+            config = {}
+        config['myanimelist_client_id'] = client_id
+        utils_save_json(config_path, config)
+    else:
+        client_id = config['myanimelist_client_id']
+    return client_id
 
 def generate_user_agents(num_agents):
     user_agents = [
@@ -74,18 +95,17 @@ def regenerate_token():
     global code_verifier
     user_agents = generate_user_agents(8)
     chosen_user_agent = random.choice(user_agents)
-    current_config = utils_read_json(config_path)
     headers = {
         'Content-Type': "application/x-www-form-urlencoded",
         'Accept': "application/json",
-        'Authorization': current_config['myanimelist_client_id'],
+        'Authorization': config['myanimelist_client_id'],
         'User-Agent': chosen_user_agent
     }
     json = {
-        'client_id': current_config['myanimelist_client_id'],
-        'client_secret': current_config['myanimelist_client_secret'],
+        'client_id': config['myanimelist_client_id'],
+        'client_secret': config['myanimelist_client_secret'],
         'grant_type': "refresh_token",
-        'refresh_token': current_config['myanimelist_refresh_token'],
+        'refresh_token': config['myanimelist_refresh_token'],
     }
     response = requests.post("https://myanimelist.net/v1/oauth2/token", data=json, headers=headers)
     if response.status_code == 200:
@@ -93,9 +113,9 @@ def regenerate_token():
     else:
         print('Refreshing token failed, please try again...')
         exit(0)
-    current_config['myanimelist_user_token'] = response['access_token']
-    current_config['myanimelist_refresh_token'] = response['refresh_token']
-    utils_save_json(config_path, current_config)
+    config['myanimelist_user_token'] = response['access_token']
+    config['myanimelist_refresh_token'] = response['refresh_token']
+    utils_save_json(config_path, config)
 
 def setup_webserver():
     app = Flask(__name__)
@@ -165,19 +185,8 @@ def setup_webserver():
     return start_webserver, http_server 
         
 def config_setup(print_only = False):
-    setup_function, _ = setup_webserver()  # Setup the server function here
-    
-    def gen_please(name, help):
-        return f"Please input your {name} here ({help}):\n"
-    
-    def get_input(prompt, data_type = str):
-        while True:
-            user_input = input(prompt)
-            try:
-                converted_input = data_type(user_input)
-                return converted_input
-            except ValueError:
-                print("Invalid input. Please enter a valid", data_type.__name__)     
+    global config
+    setup_function, _ = setup_webserver()  # Setup the server function here  
     
     def generate_api_key(client_id, client_secret):
         global global_id
@@ -200,25 +209,35 @@ def config_setup(print_only = False):
             [obj for obj in gc.get_objects() if isinstance(obj, gevent.Greenlet)]
         ) #kill all gevent greenlets to prevert interference
         return [user_token, user_refresh_token]
-    
-    config_dict = {}
-    print("Please create a new API client")
-    print(f"Put this as the redirect URI: http://{host_ip}:8888/access_token")
+
+    if 'myanimelist_client_id' not in config:
+        print("Please create a new API client")
+        print(f"Put this as the redirect URI: http://{host_ip}:8888/access_token")
     if headless_config:
         if is_displayless:
             print("The setup process cannot be continued on this machine")
             print("Please SSH into this machine, set the access key as an env variable or import the config directly")
-        client_id = get_input(gen_please("MyAnimeList API Client ID","https://myanimelist.net/apiconfig"))
+        if 'myanimelist_client_id' not in config:
+            client_id = get_input(gen_please("MyAnimeList API Client ID","https://myanimelist.net/apiconfig"))
+        else:
+            client_id = config['myanimelist_client_id']    
         client_secret = get_input(gen_please("MyAnimeList API Client Secret",f"https://myanimelist.net/apiconfig/edit/{client_id}"))
     else:
-        webbrowser.open("https://myanimelist.net/apiconfig", 0)
-        client_id = get_input(gen_please("MyAnimeList API Client ID","Paste the Client ID"))    
-        client_secret = get_input(gen_please("MyAnimeList API Client Secret","Paste the Client Secret"))
+        if 'myanimelist_client_id' not in config:
+            client_id = get_input(gen_please("MyAnimeList API Client ID","Paste the Client ID"))
+            client_secret = get_input(gen_please("MyAnimeList API Client Secret","Paste the Client Secret"))
+            sleep(1)
+            webbrowser.open("https://myanimelist.net/apiconfig", 0)
+        else:
+            client_id = config['myanimelist_client_id']
+            client_secret = get_input(gen_please("MyAnimeList API Client Secret","Paste the Client Secret"))
+            sleep(1)
+            webbrowser.open(f"https://myanimelist.net/apiconfig/edit/{client_id}", 0)
     tokens = generate_api_key(client_id, client_secret)
-    config_dict['myanimelist_client_id'] = client_id
-    config_dict['myanimelist_client_secret'] = client_secret   
-    config_dict['myanimelist_user_token'] = tokens[0]
-    config_dict['myanimelist_refresh_token'] = tokens[1]
+    config['myanimelist_client_id'] = client_id
+    config['myanimelist_client_secret'] = client_secret   
+    config['myanimelist_user_token'] = tokens[0]
+    config['myanimelist_refresh_token'] = tokens[1]
     if not print_only:    
-        utils_save_json(config_path, config_dict)
-    return config_dict
+        utils_save_json(config_path, config)
+    return config

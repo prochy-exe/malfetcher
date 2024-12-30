@@ -1,7 +1,7 @@
 import requests, time, os, copy, math
 from datetime import datetime, timedelta
 from .utils import utils_save_json, utils_read_json, print_deb
-from .mal_config_utils import config_setup, regenerate_token
+from .mal_config_utils import config_setup, regenerate_token, minimal_setup
 
 script_path = os.path.dirname(os.path.abspath(__file__))
 mal_id_cache_path = os.path.join(script_path, 'cache', 'myanimelist_id_cache.json')
@@ -31,14 +31,7 @@ skip_user_statuses = ["REPEATING"]
 
 # Minimal user setup to interact with MyAnimeList API
 config = utils_read_json(config_path)
-if not config or 'myanimelist_client_id' not in config:
-    client_id = input("Please input your MyAnimeList API Client ID.\nhttps://myanimelist.net/apiconfig\n")
-    if not config:
-        config = {}
-    config['myanimelist_client_id'] = client_id
-    utils_save_json(config_path, config)
-else:
-    client_id = config['myanimelist_client_id']
+client_id = minimal_setup()
 
 # Utils
 
