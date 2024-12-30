@@ -624,6 +624,8 @@ def get_season_ranges(anime_id):
     return season_ranges
 
 def update_entry(anime_id, progress, mal_token=None):
+    if not mal_token:
+        mal_token = load_config()
     anime_id = str(anime_id)
     progress = int(progress)
     try:
