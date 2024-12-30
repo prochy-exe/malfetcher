@@ -60,6 +60,16 @@ import malfetcher
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
+* [1.8.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.8.0)
+    * [update_entry: read token from config](https://github.com/prochy-exe/malfetcher/commit/c8c46782ab461010c63034cea592f6b1bda52203)
+    * [fix sorting of the list, along with the amount of anime](https://github.com/prochy-exe/malfetcher/commit/1687636a2a9d0bf6f00cbd5ce1a3d80de3c99cf0)
+    * [rebrand request function to mal](https://github.com/prochy-exe/malfetcher/commit/de8bbf4e8004f8a65d4beb611d253bddc39b0c0e)
+    * [add a feature that allows specifying episodes from another season](https://github.com/prochy-exe/malfetcher/commit/89e37eace4e062ed6ed787c4a6531a18b0dc707f)
+    * [fix a bug that marks anime as planning while having an episode watched](https://github.com/prochy-exe/malfetcher/commit/17e5cccf3a4cb1e611048af85f106c7daeb83ae7)
+    * [introduce a function that returns list of all seasons](https://github.com/prochy-exe/malfetcher/commit/66bb8a31c56dc746d0c6818c3da97739868cad86)
+    * [repeating support](https://github.com/prochy-exe/malfetcher/commit/5324c635ae390a67de52c939abb3c0b9da552da2)       
+    * [setup flow qol imporvements](https://github.com/prochy-exe/malfetcher/commit/63a5a9cf119f0550c56154be70e31d4b270b095b)
+    * [fix mal auth and add url tooltip](https://github.com/prochy-exe/malfetcher/commit/5a0f7b99cf96e725f5357026e3942501a167bccb)
 * [1.7.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.7.0)
     * [implement caching and 429 error handling](https://github.com/prochy-exe/malfetcher/commit/774edf2c3f2176218830718c3bfe004971a0048f)
 * [1.6.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.6.0)
