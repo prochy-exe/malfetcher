@@ -3,12 +3,16 @@ from datetime import datetime, timedelta
 from .utils import utils_save_json, utils_read_json, print_deb
 from .mal_config_utils import config_setup, regenerate_token, minimal_setup
 
+# Paths
+
 script_path = os.path.dirname(os.path.abspath(__file__))
 mal_id_cache_path = os.path.join(script_path, 'cache', 'myanimelist_id_cache.json')
 mal_search_cache_path = os.path.join(script_path, 'cache', 'myanimelist_search_cache.json')
 mal_to_al_cache_path = os.path.join(script_path, 'cache', 'mal_to_al_cache.json')
 config_path = os.path.join(script_path, 'config', 'config.json')
 anime_request_url = "https://api.myanimelist.net/v2/anime"
+
+# Global vars
 
 al_to_mal_user_status = {
     'CURRENT': "watching",
@@ -27,7 +31,8 @@ al_to_mal_status = {
 }
 
 mal_to_al_status = {v:k for k, v in al_to_mal_status.items()}
-skip_user_statuses = ["REPEATING"]
+status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
+media_formats = ['TV', 'MOVIE', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
 
 # Minimal user setup to interact with MyAnimeList API
 config = utils_read_json(config_path)
@@ -160,71 +165,7 @@ def make_mal_request(mal_api_url, params, method='get', mal_token=None, user_req
                 
         print(f"Retrying... (Attempt {retries})")
 
-def get_latest_anime_entry_for_user(status = "ALL", mal_token=None,  username = None):
-    if not username:
-        username = get_userdata(mal_token)[0]
-        user_request = True
-    else:
-        user_request = False
-
-    status = status.upper()
-    status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
-    params = {}
-    params['sort'] = 'list_updated_at'
-    params['limit'] = 1000
-    params['fields'] = (
-        "id,"
-        "title,"
-        "alternative_titles,"
-        "start_date,"
-        "end_date,"
-        "nsfw,"
-        "media_type,"
-        "status,"
-        "genres,"
-        "my_list_status{status,num_times_rewatched,is_rewatching,num_episodes_watched},"
-        "num_episodes,"
-        "related_anime"
-    )
-    params['limit'] = 1
-    if status != "ALL" and status != "REPEATING":
-        if not status in status_options:
-            print("Invalid status option. Allowed options are:", ", ".join(str(option) for option in status_options) )
-            return
-        if status in skip_user_statuses:
-            return
-        params['status'] = al_to_mal_user_status[status]
-
-    request_url = f"https://api.myanimelist.net/v2/users/{username}/animelist"
-    data = make_mal_request(request_url, params, mal_token = mal_token, user_request = user_request)
-
-    if data:
-        if status == "REPEATING":
-            for anime_entry in data:
-                if anime_entry['node']['my_list_status']['is_rewatching']:
-                    anime = anime_entry['node']
-                    break
-            print(f"No entries found for {username}'s {status.lower()} anime list.")
-            return None
-        else:
-            anime = data[0]['node']
-        anime_id = str(anime['id'])
-        anime_info = generate_anime_entry(anime, mal_token)
-        user_entry = {}    # Initialize as a dictionary if not already initialized
-        user_entry[anime_id] = {}    # Initialize as a dictionary if not already initialized
-        user_entry[anime_id].update(anime_info)
-        try:
-            user_entry[anime_id]['watched_ep'] = anime['my_list_status']['num_episodes_watched']
-            user_entry[anime_id]['watching_status'] = 'REPEATING' if anime['my_list_status']['is_rewatching'] else mal_to_al_user_status[anime['my_list_status']['status']]
-            user_entry[anime_id]['rewatch_count'] = anime['my_list_status']['num_times_rewatched']
-        except:
-            pass
-        return user_entry
-
-    print(f"No entries found for {username}'s {status.lower()} anime list.")
-    return None
-
-def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
+def get_all_anime_for_user(status_list="ALL", media_format = None, amount = 0, mal_token=None, username = None):
     if not username:
         username = get_userdata(mal_token)[0]
         user_request = True
@@ -233,10 +174,9 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
         
     def main_function(status):
         status = status.upper()
-        status_options = ["CURRENT", "PLANNING", "COMPLETED", "DROPPED", "PAUSED", "REPEATING"]
         params = {}
         params['sort'] = "list_updated_at"
-        params['limit'] = 1000
+        params['limit'] = 1000 if not amount else amount
         params['fields'] = (
             "id,"
             "title,"
@@ -267,6 +207,8 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
                 anime_entry_data = anime_entry['node']
                 if status == "REPEATING" and not anime_entry_data['my_list_status']['is_rewatching']:
                     continue
+                if media_format and media_format != anime_entry_data['media_type']:
+                    continue
                 anime_id = anime_entry_data['id']
                 anime_id = str(anime_id)
                 anime_info = generate_anime_entry(anime_entry_data, mal_token)
@@ -289,18 +231,25 @@ def get_all_anime_for_user(status_list="ALL", mal_token=None, username = None):
         return main_function(status_list)
     elif len(status_list) == 1:
         status = status_list[0].upper()
-        if status in skip_user_statuses:
-            return
         main_function(status)
         return main_function(status_list)
     elif isinstance(status_list, list):
         ani_list = {}
         for status in status_list:
-            if status in skip_user_statuses:
-                continue
             status.upper()
             ani_list.update(main_function(status))
         return ani_list
+
+def get_latest_anime_entry_for_user(status = "ALL", media_format = None, mal_token=None,  username = None):
+    if not username:
+        username = get_userdata(mal_token)[0]
+
+    status = status.upper()
+    data = get_all_anime_for_user(status, media_format, 1, mal_token, username)
+    if data:
+        return data
+    print(f"No entries found for {username}'s {status.lower()} anime list.")
+    return None
 
 def get_anime_entry_for_user(mal_id, mal_token=None):
     mal_id = str(mal_id)
@@ -459,42 +408,64 @@ def generate_anime_entry(anime_info, mal_token):
     utils_save_json(mal_id_cache_path, {anime_id: anime_data}, False)
     return anime_data
 
-def get_id(name, mal_token=None):
+def get_id(name, media_format = None, amount = 1, mal_token=None):
     search_cache = utils_read_json(mal_search_cache_path)
-    
+    id_dict = {}
+    amount = int(amount)
+    format_name = name
+    media_format = media_format.upper() if media_format else None
+    if media_format:
+        if media_format not in media_formats:
+            print("Invalid media format. Please choose from:", media_formats)
+            return
+        format_name = f"{name}_{media_format}"
     def fetch_from_mal():
-        # Fetch anime info from myanimelist API or any other source
-        anime_name = mal_fetch_id(name)
-        anime_info = str(anime_name) if anime_name else None
-        if anime_info:
-            ani_dict = get_anime_info(anime_info, False, mal_token)
-            status = ani_dict[anime_info]['status']
-            if status == "NOT_YET_RELEASED":
-                anime_info = None
-            json_out = {name: anime_info}
-            if anime_info:
-                utils_save_json(mal_search_cache_path, json_out, False)
-            return anime_info
+        # Fetch anime info from Anilist API or any other source
+        missing_amount = amount - len(search_cache.get(format_name, []))
+        anime_ids = mal_fetch_id(name, media_format, missing_amount, mal_token)
+        if anime_ids:
+            if format_name in search_cache:
+                existing_ids = set(search_cache[format_name])
+                new_anime_ids = [anime_id for anime_id in anime_ids if anime_id not in existing_ids]
+                search_cache[format_name].extend(new_anime_ids) 
+            else:
+                search_cache[format_name] = anime_ids
+            utils_save_json(mal_search_cache_path, search_cache)
+            for anime_id in search_cache[format_name][:amount]:
+                id_dict.update(get_anime_info(anime_id, True, mal_token))
+            return id_dict
         return None
     # Check if anime_id exists in cache
     try:
-        if search_cache and name in search_cache:
-                print_deb("Returning cached result for search query:", name)
-                return str(search_cache[name])
+        if search_cache and format_name in search_cache and len(search_cache[format_name]) >= amount:
+            print_deb("Returning cached result for search query:", name)
+            found_ids = search_cache[format_name]
+            for found_id in found_ids:
+                id_dict.update(get_anime_info(found_id, False, mal_token))
+            return id_dict
         else:
-                return fetch_from_mal()
-    except TypeError:
+            return fetch_from_mal()
+    except:
         return fetch_from_mal()
             
-def mal_fetch_id(name, mal_token=None):
+def mal_fetch_id(name, media_format, amount, mal_token=None):
+    anime_ids = []
     params = {
         'q': name,
-        'limit': 1
+        'limit': 100 if not amount else amount,
+        'fields': (
+            "id,"
+            "media_type"
+        )
     }
     data = make_mal_request(anime_request_url, params, mal_token = mal_token)
 
     if data:
-        return str(data[0]['node']['id'])
+        for item in data:
+            if media_format and item['media_type'].upper() != media_format:
+                continue
+            anime_ids.append(item['node']['id'])
+        return anime_ids
 
     return None
 
@@ -510,7 +481,6 @@ def get_userdata(mal_token):
         return [username, profile_pic]
 
 def mal_to_al_id(mal_id):
-    # GraphQL query to get the username of the authenticated user
     query = """
     query ($malId: Int) {
         Media(idMal: $malId type: ANIME) {

@@ -4,3 +4,4 @@ config
 cache
 /.vscode
 /build
+/malfetcher.egg-info
