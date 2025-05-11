@@ -462,7 +462,7 @@ def mal_fetch_id(name, media_format, amount, mal_token=None):
 
     if data:
         for item in data:
-            if media_format and item['media_type'].upper() != media_format:
+            if media_format and item['node']['media_type'].upper() != media_format:
                 continue
             anime_ids.append(item['node']['id'])
         return anime_ids
