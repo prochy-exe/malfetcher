@@ -48,17 +48,17 @@ if headless_config:
 else:
     host_ip = 'localhost'
 
-    def gen_please(name, help):
-        return f"Please input your {name} here ({help}):\n"
-    
-    def get_input(prompt, data_type = str):
-        while True:
-            user_input = input(prompt)
-            try:
-                converted_input = data_type(user_input)
-                return converted_input
-            except ValueError:
-                print("Invalid input. Please enter a valid", data_type.__name__)   
+def gen_please(name, help):
+    return f"Please input your {name} here ({help}):\n"
+
+def get_input(prompt, data_type = str):
+    while True:
+        user_input = input(prompt)
+        try:
+            converted_input = data_type(user_input)
+            return converted_input
+        except ValueError:
+            print("Invalid input. Please enter a valid", data_type.__name__)   
 
 def minimal_setup():
     global config
