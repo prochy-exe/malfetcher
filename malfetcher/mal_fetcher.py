@@ -36,7 +36,7 @@ media_formats = ['TV', 'MOVIE', 'SPECIAL', 'OVA', 'ONA', 'MUSIC']
 
 # Minimal user setup to interact with MyAnimeList API
 config = utils_read_json(config_path)
-client_id = minimal_setup()
+client_id = os.getenv("MAL_CLIENT_ID", "") if os.getenv("MAL_CLIENT_ID", "") else minimal_setup()
 
 # Utils
 
