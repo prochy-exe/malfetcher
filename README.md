@@ -60,6 +60,10 @@ import malfetcher
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
+* [2.0.0](https://github.com/prochy-exe/malfetcher/releases/tag/v2.0.0)
+    * [allow client_id to be an ENV var](https://github.com/prochy-exe/malfetcher/commit/a6ee2dbfaf70557d75b9d1971322e774538c6324)
+    * [fix media_type path](https://github.com/prochy-exe/malfetcher/commit/ba4d1d1f9f93f7603c91d0d1b520406b94d628b0)
+    * [fix padding in config_utils](https://github.com/prochy-exe/malfetcher/commit/a980f0c8237f8715b5ca7e691e1e08bc925c503f)
 * [1.9.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.9.0)
     * [amount and format support, general improvements](https://github.com/prochy-exe/malfetcher/commit/4dc7c76fb5657f25649b25587c4d8ae6c70d49e9)
     * [return empty dict instead of none](https://github.com/prochy-exe/malfetcher/commit/ae35eef7c721ee21ba471e89a18a91a385bcd54a)
