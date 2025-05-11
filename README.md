@@ -60,6 +60,9 @@ import malfetcher
 If you encounter any issues, feel free to open a new issue. If you have any new ideas or fixes, please open a pull request, they are more than welcome!
 
 ## Version History
+* [1.9.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.9.0)
+    * [amount and format support, general improvements](https://github.com/prochy-exe/malfetcher/commit/4dc7c76fb5657f25649b25587c4d8ae6c70d49e9)
+    * [return empty dict instead of none](https://github.com/prochy-exe/malfetcher/commit/ae35eef7c721ee21ba471e89a18a91a385bcd54a)
 * [1.8.0](https://github.com/prochy-exe/malfetcher/releases/tag/v1.8.0)
     * [update_entry: read token from config](https://github.com/prochy-exe/malfetcher/commit/c8c46782ab461010c63034cea592f6b1bda52203)
     * [fix sorting of the list, along with the amount of anime](https://github.com/prochy-exe/malfetcher/commit/1687636a2a9d0bf6f00cbd5ce1a3d80de3c99cf0)
